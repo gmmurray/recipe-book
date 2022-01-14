@@ -1,0 +1,14 @@
+$success-main: #66bb6a;
+$success-dark: #388e3c;
+
+.success-input {
+    label {
+        color: $success-main !important;
+    }
+    fieldset {
+        border-color: $success-main !important;
+    }
+    p {
+        color: $success-dark;
+    }
+}

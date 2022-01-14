@@ -1,0 +1,2 @@
+export const MINIMUM_USERNAME_LENGTH = 5;
+export const MINIMUM_PASSWORD_LENGTH = 5;
