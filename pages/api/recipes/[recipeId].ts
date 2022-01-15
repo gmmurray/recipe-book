@@ -55,7 +55,7 @@ const handlePutRequest: RequestMethodHandler = async (req, res, db, client) =>
                         _id: toObjectId(
                             resolveApiQueryParam(request.query, 'recipeId'),
                         ),
-                        userId: toObjectId((token!.user as CredentialUser)._id),
+                        userId,
                     },
                     { $set: { ...updates } },
                 );
@@ -79,6 +79,7 @@ const handleDeleteRequest: RequestMethodHandler = async (
         callback: async (request, response) => {
             const token = await getRequestToken(request);
             const userId = toObjectId((token!.user as CredentialUser)._id);
+
             const recipeId = toObjectId(
                 resolveApiQueryParam(request.query, 'recipeId'),
             );

@@ -8,6 +8,11 @@ export const isMinLength = (name: string, length: number) => (value: string) =>
         ? undefined
         : `${name} must be at least ${length} character(s) long`;
 
+export const isMaxLength = (name: string, length: number) => (value: string) =>
+    (value?.length ?? 0) <= length
+        ? undefined
+        : `${name} must be less than ${length} character(s) long`;
+
 export const isMatchingValue =
     (name: string, valueToMatch: any) => (value: any) =>
         valueToMatch === value ? undefined : `${name} must match`;

@@ -44,6 +44,10 @@ const handlePostRequest: RequestMethodHandler = async (req, res, db, client) =>
         callback: async (request, response) => {
             const result = await db.collection(recipesCollection).insertOne({
                 ...request.body,
+                createdAt: new Date(),
+                categoryId: request.body.categoryId
+                    ? toObjectId(request.body.categoryId)
+                    : null,
                 userId: toObjectId(request.body.userId),
             });
 
