@@ -10,7 +10,7 @@ import { StatusCodes } from 'http-status-codes';
 import { credentialUsersCollection } from '../../../../entities/CredentialUser';
 import { hashString } from '../../../../util/hash';
 
-const handlePostRequest: RequestMethodHandler = async (req, res, db) =>
+const handlePostRequest: RequestMethodHandler = async (req, res, db, client) =>
     createMethodHandler({
         requireToken: false,
         callback: async (request, response) => {
@@ -23,7 +23,7 @@ const handlePostRequest: RequestMethodHandler = async (req, res, db) =>
             });
             response.status(StatusCodes.CREATED).json(null);
         },
-    })(req, res, db);
+    })(req, res, db, client);
 
 const requestMethodHandlers: CreateRootHandlerParams = {
     [RequestMethods.POST]: handlePostRequest,

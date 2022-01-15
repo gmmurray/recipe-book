@@ -31,47 +31,48 @@ const Layout: FC = ({ children }) => {
         return <CenteredCircularProgress minHeight="calc(100vh - 64px)" />;
     }
 
+    if (!session) {
+        return <Fragment>{children}</Fragment>;
+    }
+
+    const isPageNotFound = pathname === '/404';
+
     return (
         <Fragment>
-            {!!session && (
-                <Fragment>
-                    <Navbar
-                        isAuthenticated={!!session}
-                        isLoading={sessionIsLoading}
-                    />
-                    <Container maxWidth="xl" sx={{ py: 2 }}>
-                        {currentRoute.isDefault ? (
-                            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            <Navbar isAuthenticated={!!session} isLoading={sessionIsLoading} />
+            {!isPageNotFound && (
+                <Container maxWidth="xl" sx={{ py: 2 }}>
+                    {currentRoute.isDefault ? (
+                        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                            {currentRoute.title}
+                        </Typography>
+                    ) : (
+                        <Breadcrumbs>
+                            {(currentRoute.breadcrumbs ?? []).map(r => (
+                                <NextLink
+                                    key={r.pathname}
+                                    href={r.pathname}
+                                    passHref
+                                >
+                                    <Link
+                                        underline="hover"
+                                        color="text.secondary"
+                                    >
+                                        <Typography variant="subtitle1">
+                                            {r.title}
+                                        </Typography>
+                                    </Link>
+                                </NextLink>
+                            ))}
+                            <Typography
+                                color="text.primary"
+                                variant="subtitle1"
+                            >
                                 {currentRoute.title}
                             </Typography>
-                        ) : (
-                            <Breadcrumbs>
-                                {(currentRoute.breadcrumbs ?? []).map(r => (
-                                    <NextLink
-                                        key={r.pathname}
-                                        href={r.pathname}
-                                        passHref
-                                    >
-                                        <Link
-                                            underline="hover"
-                                            color="text.secondary"
-                                        >
-                                            <Typography variant="subtitle1">
-                                                {r.title}
-                                            </Typography>
-                                        </Link>
-                                    </NextLink>
-                                ))}
-                                <Typography
-                                    color="text.primary"
-                                    variant="subtitle1"
-                                >
-                                    {currentRoute.title}
-                                </Typography>
-                            </Breadcrumbs>
-                        )}
-                    </Container>
-                </Fragment>
+                        </Breadcrumbs>
+                    )}
+                </Container>
             )}
             <Container maxWidth="xl">{children}</Container>
         </Fragment>

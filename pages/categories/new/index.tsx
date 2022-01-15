@@ -1,14 +1,16 @@
+import { Button, Stack, TextField, Typography } from '@mui/material';
 import { Field, Form } from 'react-final-form';
 import { Fragment, useCallback } from 'react';
-import { Stack, TextField, Typography } from '@mui/material';
 import {
     showErrorSnackbar,
     showSuccessSnackbar,
 } from '../../../config/notistack';
 
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box } from '@mui/system';
 import { Category } from '../../../entities/Category';
 import { CredentialUser } from '../../../entities/CredentialUser';
+import Link from 'next/link';
 import { LoadingButton } from '@mui/lab';
 import { isRequired } from '../../../util/validation';
 import { useCreateCategory } from '../../../lib/queries/categoryQueries';
@@ -47,7 +49,18 @@ const NewCategory = () => {
     );
     return (
         <Fragment>
-            <Typography variant="h3">Add category</Typography>
+            <Box display="flex" alignItems="center">
+                <Typography variant="h3">Add category</Typography>
+                <Link href="/categories" passHref>
+                    <Button
+                        sx={{ ml: 'auto' }}
+                        variant="outlined"
+                        startIcon={<ArrowBackIcon />}
+                    >
+                        Back to list
+                    </Button>
+                </Link>
+            </Box>
             <Form
                 onSubmit={(data: Partial<Category>) => onCreate(data)}
                 render={({ handleSubmit }) => (

@@ -22,7 +22,8 @@ Coming soon...
 
 ## Status
 
--   [ ] Auth (Login/Register)
+-   [x] Auth (Login/Register)
 -   [x] Category CRUD
--   [ ] Recipe CRUD
+-   [ ] Recipe CRUD - started
 -   [ ] Homepage: recently viewed/created recipes
+-   [ ] Progressive Web App (PWA) functionality

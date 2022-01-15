@@ -49,7 +49,7 @@ const Categories = () => {
                 <Link href="/categories/new" passHref>
                     <Button
                         sx={{ ml: 'auto' }}
-                        variant="contained"
+                        variant="outlined"
                         startIcon={<Add />}
                     >
                         New

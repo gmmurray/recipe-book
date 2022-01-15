@@ -1,13 +1,15 @@
+import { CircularProgress, Typography } from '@mui/material';
 import { FC, Fragment } from 'react';
 
 import { Box } from '@mui/system';
-import { CircularProgress } from '@mui/material';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 type ContentWithStatusProps = {
     loading: boolean;
     empty: boolean;
     name: string;
     marginY: number;
+    isSingle?: boolean;
 };
 
 const ContentWithStatus: FC<ContentWithStatusProps> = ({
@@ -15,18 +17,24 @@ const ContentWithStatus: FC<ContentWithStatusProps> = ({
     empty,
     name,
     marginY,
+    isSingle = false,
     children,
 }) => {
     if (loading) {
         return (
             <Box textAlign="center" my={marginY}>
-                <CircularProgress />
+                <CircularProgress size="2.5rem" />
             </Box>
         );
     } else if (empty) {
         return (
             <Box textAlign="center" my={marginY}>
-                No {name} found
+                <CancelIcon sx={{ fontSize: '2.5rem' }} />
+                <Typography variant="h6">
+                    {isSingle
+                        ? `That ${name} could not be found`
+                        : `No ${name} found`}
+                </Typography>
             </Box>
         );
     }

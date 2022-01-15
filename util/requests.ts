@@ -1,8 +1,8 @@
+import { Db, MongoClient } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { ReasonPhrases, StatusCodes, getReasonPhrase } from 'http-status-codes';
 
 import { CredentialUser } from '../entities/CredentialUser';
-import { Db } from 'mongodb';
 import { RequestMethods } from '../lib/constants/httpRequestMethods';
 import clientPromise from '../config/mongoAdapter';
 import { getToken } from 'next-auth/jwt';
@@ -16,6 +16,7 @@ export type RequestMethodHandler = (
     req: NextApiRequest,
     res: NextApiResponse,
     db: Db,
+    client: MongoClient,
 ) => Promise<any>;
 
 type RootHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>;
@@ -27,22 +28,23 @@ export type CreateRootHandlerParams =
 type CreateRootHandlerType = (params: CreateRootHandlerParams) => RootHandler;
 export const createRootHandler: CreateRootHandlerType =
     params => async (req, res) => {
-        const db = (await clientPromise).db();
+        const client = await clientPromise;
+        const db = client.db();
         switch (req.method) {
             case RequestMethods.GET: {
-                if (params.GET) return params.GET(req, res, db);
+                if (params.GET) return params.GET(req, res, db, client);
             }
             case RequestMethods.POST: {
-                if (params.POST) return params.POST(req, res, db);
+                if (params.POST) return params.POST(req, res, db, client);
             }
             case RequestMethods.PATCH: {
-                if (params.PATCH) return params.PATCH(req, res, db);
+                if (params.PATCH) return params.PATCH(req, res, db, client);
             }
             case RequestMethods.PUT: {
-                if (params.PUT) return params.PUT(req, res, db);
+                if (params.PUT) return params.PUT(req, res, db, client);
             }
             case RequestMethods.DELETE: {
-                if (params.DELETE) return params.DELETE(req, res, db);
+                if (params.DELETE) return params.DELETE(req, res, db, client);
             }
             default:
                 throw new Error(ReasonPhrases.NOT_IMPLEMENTED);
@@ -60,7 +62,7 @@ type CreateMethodHandlerType = (
 ) => RequestMethodHandler;
 export const createMethodHandler: CreateMethodHandlerType =
     ({ callback, requireToken, requiredUserId }) =>
-    async (req, res, db) => {
+    async (req, res, db, client) => {
         try {
             const token = await getToken({ req, secret: JWT_SECRET });
 
@@ -74,7 +76,7 @@ export const createMethodHandler: CreateMethodHandlerType =
                 : true;
 
             if (isAuthenticated && isAuthorized) {
-                await callback(req, res, db);
+                await callback(req, res, db, client);
             } else {
                 res.status(StatusCodes.UNAUTHORIZED).json(null);
             }

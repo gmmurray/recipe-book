@@ -4,6 +4,7 @@ import {
     axiosPostRequest,
     axiosPutRequest,
 } from '../../config/axios';
+import { createEndpoint, createQueryEndpoint } from '../../util/createEndpoint';
 import { useMutation, useQuery } from 'react-query';
 
 import { Category } from '../../entities/Category';
@@ -36,7 +37,7 @@ export const useGetCategory = (id: string | null) =>
     );
 
 const getCategories = async (name: string | null) =>
-    axiosGetRequest(apiEndpoint + `${name ? `?name=${encodeURI(name)}` : ''}`);
+    axiosGetRequest(createQueryEndpoint(apiEndpoint, { name }));
 export const useGetCategories = (name: string | null) =>
     useQuery<Category[] | null>(
         categoryQueryKeys.search(name),
@@ -54,7 +55,7 @@ export const useCreateCategory = () =>
     });
 
 const updateCategory = async (data: Category) =>
-    await axiosPutRequest(apiEndpoint, data);
+    await axiosPutRequest(createEndpoint(apiEndpoint, data._id), data);
 export const useUpdateCategory = () =>
     useMutation((data: Category) => updateCategory(data), {
         onSuccess: (res: Category) =>
