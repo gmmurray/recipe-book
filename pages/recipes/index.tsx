@@ -95,8 +95,10 @@ const ViewRecipes = () => {
         recipeSort,
     );
 
-    const { data: categories, isLoading: categoriesLoading } =
-        useGetCategories(null);
+    const { data: categories, isLoading: categoriesLoading } = useGetCategories(
+        null,
+        null,
+    );
 
     const [menuAnchors, setMenuAnchors] = useState<
         Record<MenuAnchorKey, HTMLElement | null>

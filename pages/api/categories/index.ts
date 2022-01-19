@@ -5,12 +5,13 @@ import {
     createRootHandler,
     getRequestToken,
 } from '../../../util/requests';
-import { Document, Filter } from 'mongodb';
+import { Document, Filter, WithId } from 'mongodb';
 
 import { CredentialUser } from '../../../entities/CredentialUser';
 import { RequestMethods } from '../../../lib/constants/httpRequestMethods';
 import { StatusCodes } from 'http-status-codes';
 import { categoriesCollection } from '../../../entities/Category';
+import { recipesCollection } from '../../../entities/Recipe';
 import { toObjectId } from '../../../util/objectId';
 
 const handleGetRequest: RequestMethodHandler = async (req, res, db, client) =>
@@ -18,30 +19,110 @@ const handleGetRequest: RequestMethodHandler = async (req, res, db, client) =>
         requireToken: true,
         callback: async (request, response) => {
             const token = await getRequestToken(request);
-            const { name } = request.query;
-            let resolvedName = undefined;
-            if (name) {
-                resolvedName = typeof name === 'string' ? name : name[0];
-            }
+            const userId = toObjectId((token!.user as CredentialUser)._id);
 
-            const query: Filter<Document> = {
-                userId: toObjectId((token!.user as CredentialUser)._id),
+            const $match: Filter<Document> = {
+                $and: [
+                    {
+                        userId,
+                    },
+                ],
             };
+            const $or: Filter<WithId<WithId<Document>>>[] = [];
 
-            if (resolvedName) {
-                query.name = {
-                    $regex: resolvedName,
-                    $options: 'i',
-                };
+            Object.keys(request.query)
+                .filter(
+                    key =>
+                        key !== 'sortField' &&
+                        key !== 'sortDir' &&
+                        request.query[key] &&
+                        request.query[key] !== undefined,
+                )
+                .forEach(key => {
+                    switch (key) {
+                        case 'name': {
+                            $or.push({
+                                [key]: {
+                                    $regex: request.query[key],
+                                    $options: 'i',
+                                },
+                            });
+                            break;
+                        }
+                        default: {
+                            return;
+                        }
+                    }
+                });
+
+            if ($or.length > 0) {
+                $match['$and']!.push({ $or });
             }
 
-            const result = await db
-                .collection(categoriesCollection)
-                .find(query, { sort: { name: 1 } })
-                .toArray();
+            const sortField = request.query['sortField'] as string;
+            const sortDir = request.query['sortDir'] === 'asc' ? 1 : -1;
+            let resolvedSortField;
+            let sortType;
+            if (sortField === 'recipes') {
+                sortType = '$sort';
+                resolvedSortField = 'recipes';
+            } else {
+                sortType = '$sort';
+                resolvedSortField = sortField;
+            }
 
-            if (!result) response.status(StatusCodes.NOT_FOUND).json(null);
-            else response.status(StatusCodes.OK).json(result);
+            const aggPipeline: Document[] = [
+                {
+                    $match,
+                },
+                {
+                    $lookup: {
+                        from: recipesCollection,
+                        as: 'recipes',
+                        let: { categoryId: '$_id' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    '$$categoryId',
+                                                    '$categoryId',
+                                                ],
+                                            },
+                                            {
+                                                $eq: ['$userId', userId],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+                {
+                    [sortType]: {
+                        [resolvedSortField]: sortDir,
+                    },
+                },
+            ];
+
+            const aggCursor = db
+                .collection(categoriesCollection)
+                .aggregate(aggPipeline);
+
+            const aggResult: any[] = [];
+
+            await aggCursor.forEach(item => {
+                aggResult.push(item);
+            });
+
+            if (aggResult.length === 0) {
+                response.status(StatusCodes.OK).json([]);
+            } else {
+                response.status(StatusCodes.OK).json(aggResult);
+            }
         },
     })(req, res, db, client);
 

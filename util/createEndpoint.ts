@@ -11,7 +11,6 @@ export const createQueryEndpoint = (
             key => query[key] !== undefined && query[key] !== null,
         )
     ) {
-        console.log(query);
         const arrayParams = Object.keys(query).filter(key =>
             Array.isArray(query[key]),
         );

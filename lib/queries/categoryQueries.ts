@@ -1,4 +1,10 @@
 import {
+    Category,
+    CategoryFilter,
+    CategorySort,
+    CategoryWithRecipes,
+} from '../../entities/Category';
+import {
     axiosDeleteRequest,
     axiosGetRequest,
     axiosPostRequest,
@@ -7,7 +13,6 @@ import {
 import { createEndpoint, createQueryEndpoint } from '../../util/createEndpoint';
 import { useMutation, useQuery } from 'react-query';
 
-import { Category } from '../../entities/Category';
 import { ReasonPhrases } from 'http-status-codes';
 import { queryClient } from '../../config/queryClient';
 
@@ -15,8 +20,8 @@ export const categoryQueryKeys = {
     all: 'categories' as const,
     view: (_id: string | null) =>
         [categoryQueryKeys.all, 'view', { _id }] as const,
-    search: (name: string | null) =>
-        [categoryQueryKeys.all, 'search', { name }] as const,
+    search: (filter: CategoryFilter | null, sort: CategorySort | null) =>
+        [categoryQueryKeys.all, 'search', { filter, sort }] as const,
 };
 
 const apiEndpoint = 'api/categories';
@@ -36,12 +41,23 @@ export const useGetCategory = (id: string | null) =>
         },
     );
 
-const getCategories = async (name: string | null) =>
-    axiosGetRequest(createQueryEndpoint(apiEndpoint, { name }));
-export const useGetCategories = (name: string | null) =>
-    useQuery<Category[] | null>(
-        categoryQueryKeys.search(name),
-        () => getCategories(name),
+const getCategories = async (
+    filter: CategoryFilter | null,
+    sort: CategorySort | null,
+) =>
+    axiosGetRequest(
+        createQueryEndpoint(apiEndpoint, {
+            ...(filter ?? {}),
+            ...(sort ?? {}),
+        }),
+    );
+export const useGetCategories = (
+    filter: CategoryFilter | null,
+    sort: CategorySort | null,
+) =>
+    useQuery<CategoryWithRecipes[] | null>(
+        categoryQueryKeys.search(filter, sort),
+        () => getCategories(filter, sort),
         { retry: false },
     );
 
