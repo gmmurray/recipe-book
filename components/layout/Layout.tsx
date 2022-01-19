@@ -74,7 +74,9 @@ const Layout: FC = ({ children }) => {
                     )}
                 </Container>
             )}
-            <Container maxWidth="xl">{children}</Container>
+            <Container maxWidth="xl" sx={{ pb: 2 }}>
+                {children}
+            </Container>
         </Fragment>
     );
 };

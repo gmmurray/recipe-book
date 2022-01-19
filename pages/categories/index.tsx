@@ -2,11 +2,13 @@ import { Add, Delete } from '@mui/icons-material';
 import {
     Button,
     Divider,
+    Fade,
     IconButton,
     List,
     ListItem,
     ListItemButton,
     ListItemText,
+    Slide,
     Typography,
 } from '@mui/material';
 import { Fragment, useCallback } from 'react';
@@ -22,6 +24,8 @@ import Link from 'next/link';
 import { pluralCountText } from '../../util/plural';
 import { useSnackbar } from 'notistack';
 
+// TODO: sort alphabetically
+// TODO: search
 const Categories = () => {
     const { enqueueSnackbar } = useSnackbar();
     const { data: categories, isLoading } = useGetCategories(null);
@@ -29,7 +33,7 @@ const Categories = () => {
     const deleteMutation = useDeleteCategory();
 
     const handleDelete = useCallback(
-        async (id: string) =>
+        async (id: string | null) =>
             deleteMutation.mutate(id, {
                 onSuccess: async () =>
                     showSuccessSnackbar(enqueueSnackbar, 'Category deleted'),
@@ -56,9 +60,12 @@ const Categories = () => {
                     </Button>
                 </Link>
             </Box>
-            <Typography variant="caption" color="text.dark">
-                {!isLoading &&
-                    pluralCountText('category', 'categories', categories)}
+            <Typography variant="caption" color="text.secondary">
+                {isLoading ? (
+                    <span>&nbsp;&nbsp;</span>
+                ) : (
+                    pluralCountText('category', 'categories', categories)
+                )}
             </Typography>
             <ContentWithStatus
                 loading={isLoading}
@@ -72,24 +79,35 @@ const Categories = () => {
                             index !== (categories ?? []).length - 1;
                         return (
                             <Fragment key={_id}>
-                                <ListItem
-                                    secondaryAction={
-                                        <IconButton
-                                            edge="end"
-                                            onClick={() => handleDelete(_id)}
+                                <Slide direction="up" in={true} timeout={500}>
+                                    <Box>
+                                        <ListItem
+                                            secondaryAction={
+                                                <IconButton
+                                                    edge="end"
+                                                    onClick={() =>
+                                                        handleDelete(_id)
+                                                    }
+                                                >
+                                                    <Delete />
+                                                </IconButton>
+                                            }
+                                            disablePadding
                                         >
-                                            <Delete />
-                                        </IconButton>
-                                    }
-                                    disablePadding
-                                >
-                                    <Link href={`/categories/${_id}`} passHref>
-                                        <ListItemButton>
-                                            <ListItemText primary={name} />
-                                        </ListItemButton>
-                                    </Link>
-                                </ListItem>
-                                {showDivider && <Divider />}
+                                            <Link
+                                                href={`/categories/${_id}`}
+                                                passHref
+                                            >
+                                                <ListItemButton>
+                                                    <ListItemText
+                                                        primary={name}
+                                                    />
+                                                </ListItemButton>
+                                            </Link>
+                                        </ListItem>
+                                        {showDivider && <Divider />}
+                                    </Box>
+                                </Slide>
                             </Fragment>
                         );
                     })}

@@ -1,4 +1,9 @@
-import { Recipe, RecipeFilter } from '../../entities/Recipe';
+import {
+    Recipe,
+    RecipeFilter,
+    RecipeSort,
+    RecipeWithCategory,
+} from '../../entities/Recipe';
 import {
     axiosDeleteRequest,
     axiosGetRequest,
@@ -9,15 +14,14 @@ import { createEndpoint, createQueryEndpoint } from '../../util/createEndpoint';
 import { useMutation, useQuery } from 'react-query';
 
 import { ReasonPhrases } from 'http-status-codes';
-import { categoryQueryKeys } from './categoryQueries';
 import { queryClient } from '../../config/queryClient';
 
 export const recipeQueryKeys = {
     all: 'recipes' as const,
     view: (_id: string | null) =>
         [recipeQueryKeys.all, 'view', { _id }] as const,
-    search: (filter: RecipeFilter | null) =>
-        [recipeQueryKeys.all, 'search', { filter }] as const,
+    search: (filter: RecipeFilter | null, sort: RecipeSort | null) =>
+        [recipeQueryKeys.all, 'search', { filter, sort }] as const,
 };
 
 const apiEndpoint = 'api/recipes';
@@ -33,12 +37,17 @@ export const useGetRecipeQuery = (id: string | null) =>
         retry: false,
     });
 
-const getRecipes = async (filter: RecipeFilter | null) =>
-    axiosGetRequest(createQueryEndpoint(apiEndpoint, filter));
-export const useGetRecipesQuery = (filter: RecipeFilter | null) =>
-    useQuery<Recipe[] | null>(
-        recipeQueryKeys.search(filter),
-        () => getRecipes(filter),
+const getRecipes = async (
+    filter: RecipeFilter | null,
+    sort: RecipeSort | null,
+) => axiosGetRequest(createQueryEndpoint(apiEndpoint, { ...filter, ...sort }));
+export const useGetRecipesQuery = (
+    filter: RecipeFilter | null,
+    sort: RecipeSort | null,
+) =>
+    useQuery<RecipeWithCategory[] | null>(
+        recipeQueryKeys.search(filter, sort),
+        () => getRecipes(filter, sort),
         { retry: false },
     );
 
@@ -52,16 +61,16 @@ export const useCreateRecipeMutation = () =>
     });
 
 const updateRecipe = async (data: Recipe) =>
-    await axiosPutRequest(apiEndpoint, data);
+    await axiosPutRequest(createEndpoint(apiEndpoint, data._id), data);
 export const useUpdateRecipeMutation = () =>
     useMutation((data: Recipe) => updateRecipe(data), {
         onSuccess: (res: Recipe) =>
-            queryClient.invalidateQueries(categoryQueryKeys.view(res._id)),
+            queryClient.invalidateQueries(recipeQueryKeys.all),
     });
 
 const deleteRecipe = async (id: string | null) =>
     await axiosDeleteRequest(createEndpoint(apiEndpoint, id));
 export const useDeleteRecipeMutation = () =>
     useMutation((id: string | null) => deleteRecipe(id), {
-        onSuccess: () => queryClient.invalidateQueries(categoryQueryKeys.all),
+        onSuccess: () => queryClient.invalidateQueries(recipeQueryKeys.all),
     });

@@ -12,3 +12,10 @@ $success-dark: #388e3c;
         color: $success-dark;
     }
 }
+
+.loading-menu {
+    div.MuiPopover-paper {
+        width: 50px;
+        text-align: center;
+    }
+}

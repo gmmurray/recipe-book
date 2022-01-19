@@ -5,11 +5,12 @@ import {
     createRootHandler,
     getRequestToken,
 } from '../../../util/requests';
-import { Document, Filter } from 'mongodb';
+import { Document, Filter, WithId } from 'mongodb';
 
 import { CredentialUser } from '../../../entities/CredentialUser';
 import { RequestMethods } from '../../../lib/constants/httpRequestMethods';
 import { StatusCodes } from 'http-status-codes';
+import { categoriesCollection } from '../../../entities/Category';
 import { recipesCollection } from '../../../entities/Recipe';
 import { toObjectId } from '../../../util/objectId';
 
@@ -19,20 +20,115 @@ const handleGetRequest: RequestMethodHandler = async (req, res, db, client) =>
         callback: async (request, response) => {
             const token = await getRequestToken(request);
 
-            const query: Filter<Document> = {
-                userId: toObjectId((token!.user as CredentialUser)._id),
-                ...request.query,
+            const $match: Filter<Document> = {
+                $and: [
+                    {
+                        userId: toObjectId((token!.user as CredentialUser)._id),
+                    },
+                ],
             };
+            const $or: Filter<WithId<WithId<Document>>>[] = [];
 
-            const result = await db
+            Object.keys(request.query)
+                .filter(
+                    key =>
+                        key !== 'sortField' &&
+                        key !== 'sortDir' &&
+                        request.query[key] &&
+                        request.query[key] !== 'undefined',
+                )
+                .forEach(key => {
+                    if (
+                        request.query[key] &&
+                        request.query[key] !== 'undefined'
+                    ) {
+                        if (key === 'name' || key === 'notes') {
+                            $or.push({
+                                [key]: {
+                                    $regex: request.query[key],
+                                    $options: 'i',
+                                },
+                            });
+                        } else if (key === 'categoryId') {
+                            let categoryIdFilter: Filter<WithId<Document>> = {};
+
+                            if (typeof request.query[key] === 'string') {
+                                categoryIdFilter = {
+                                    [key]:
+                                        request.query[key] === 'null'
+                                            ? null
+                                            : toObjectId(
+                                                  request.query[key] as string,
+                                              ),
+                                };
+                            } else {
+                                const ids = (
+                                    request.query[key] as string[]
+                                ).map(id =>
+                                    id === 'null' ? null : toObjectId(id),
+                                );
+                                categoryIdFilter = {
+                                    [key]: {
+                                        $in: ids,
+                                    },
+                                };
+                            }
+                            $match['$and']!.push({ ...categoryIdFilter });
+                        } else if (key === 'rating') {
+                            $match['$and']!.push({
+                                [key]: parseInt(request.query[key] as string),
+                            });
+                        } else {
+                            $match['$and']!.push({ [key]: request.query[key] });
+                        }
+                    }
+                });
+
+            if ($or.length > 0) {
+                $match['$and']!.push({ $or });
+            }
+
+            const aggPipeline: Document[] = [
+                {
+                    $match,
+                },
+                {
+                    $lookup: {
+                        from: categoriesCollection,
+                        localField: 'categoryId',
+                        foreignField: '_id',
+                        as: 'category',
+                    },
+                },
+                {
+                    $sort: {
+                        [request.query['sortField'] === 'category'
+                            ? 'category.name'
+                            : (request.query['sortField'] as string)]:
+                            request.query['sortDir'] === 'asc' ? 1 : -1,
+                    },
+                },
+            ];
+
+            const aggCursor = db
                 .collection(recipesCollection)
-                .find(query, { sort: { name: 1 } })
-                .toArray();
+                .aggregate(aggPipeline);
 
-            if (!result) {
-                response.status(StatusCodes.NOT_FOUND).json(null);
+            const aggResult: any[] = [];
+
+            await aggCursor.forEach(item => {
+                aggResult.push(item);
+            });
+
+            if (aggResult.length === 0) {
+                response.status(StatusCodes.OK).json([]);
             } else {
-                response.status(StatusCodes.OK).json(result);
+                response.status(StatusCodes.OK).json(
+                    aggResult.map(item => ({
+                        ...item,
+                        category: item.category[0] ?? null,
+                    })),
+                );
             }
         },
     })(req, res, db, client);

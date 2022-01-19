@@ -57,7 +57,12 @@ const handlePutRequest: RequestMethodHandler = async (req, res, db, client) =>
                         ),
                         userId,
                     },
-                    { $set: { ...updates } },
+                    {
+                        $set: {
+                            ...updates,
+                            categoryId: toObjectId(updates.categoryId),
+                        },
+                    },
                 );
 
             if (result.ok) {

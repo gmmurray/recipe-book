@@ -13,7 +13,12 @@ import {
 } from '@mui/material';
 import { Field, Form } from 'react-final-form';
 import { Fragment, useCallback } from 'react';
-import { isMaxLength, isRequired } from '../../../util/validation';
+import {
+    composeValidators,
+    isMaxLength,
+    isRequired,
+    isValidUrl,
+} from '../../../util/validation';
 import {
     showErrorSnackbar,
     showSuccessSnackbar,
@@ -24,6 +29,7 @@ import { CredentialUser } from '../../../entities/CredentialUser';
 import Link from 'next/link';
 import { LoadingButton } from '@mui/lab';
 import { Recipe } from '../../../entities/Recipe';
+import { addHttp } from '../../../util/addHttp';
 import { useCreateRecipeMutation } from '../../../lib/queries/recipeQueries';
 import { useGetCategories } from '../../../lib/queries/categoryQueries';
 import { useRouter } from 'next/router';
@@ -48,6 +54,7 @@ const NewRecipe = () => {
                     categoryId:
                         data.categoryId === '0' ? null : data.categoryId,
                     rating: parseInt(data.rating?.toString() ?? '0'),
+                    url: addHttp(data.url),
                 },
                 {
                     onSuccess: async result => {
@@ -144,18 +151,24 @@ const NewRecipe = () => {
                                     )}
                                 />
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item xs={12} md={6}>
                                 <Field
-                                    type="radio"
-                                    name="rating"
-                                    initialValue={0}
-                                    render={({ input }) => (
-                                        <Fragment>
-                                            <Typography component="legend">
-                                                Rating
-                                            </Typography>
-                                            <Rating {...input} />
-                                        </Fragment>
+                                    name="url"
+                                    validate={composeValidators(
+                                        isRequired('Url'),
+                                        isValidUrl('Url'),
+                                    )}
+                                    render={({ input, meta }) => (
+                                        <TextField
+                                            {...input}
+                                            label="Url"
+                                            variant="outlined"
+                                            fullWidth
+                                            error={meta.error && meta.touched}
+                                            helperText={
+                                                meta.touched && meta.error
+                                            }
+                                        />
                                     )}
                                 />
                             </Grid>
@@ -175,6 +188,21 @@ const NewRecipe = () => {
                                                 meta.touched && meta.error
                                             }
                                         />
+                                    )}
+                                />
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Field
+                                    type="radio"
+                                    name="rating"
+                                    initialValue={0}
+                                    render={({ input }) => (
+                                        <Fragment>
+                                            <Typography component="legend">
+                                                Rating
+                                            </Typography>
+                                            <Rating {...input} />
+                                        </Fragment>
                                     )}
                                 />
                             </Grid>
