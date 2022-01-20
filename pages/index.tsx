@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 
 const Home: NextPage = () => {
     const { data: session } = useSession();
-    return <Container>hi</Container>;
+    return <Container maxWidth="xl">hi</Container>;
 };
 
 export default Home;

@@ -1,7 +1,10 @@
+const makePageTitle = (value: string) => `${value} - Recipe Book`;
+
 type RouteBreadcrumb = { title: string; pathname: string };
 
 export type RouteMapRoute = {
     title: string;
+    pageTitle: string;
     breadcrumbs?: RouteBreadcrumb[];
     isDefault?: boolean;
 };
@@ -11,9 +14,11 @@ export type RouteMap = Record<string, RouteMapRoute>;
 export const routeMap: RouteMap = {
     ['/']: {
         title: 'Home',
+        pageTitle: makePageTitle('Home'),
     },
     ['/categories']: {
         title: 'Categories',
+        pageTitle: makePageTitle('Categories'),
         breadcrumbs: [
             {
                 title: 'Home',
@@ -23,6 +28,7 @@ export const routeMap: RouteMap = {
     },
     ['/categories/[categoryId]']: {
         title: 'View',
+        pageTitle: makePageTitle('View Category'),
         breadcrumbs: [
             {
                 title: 'Home',
@@ -36,6 +42,7 @@ export const routeMap: RouteMap = {
     },
     ['/categories/new']: {
         title: 'New',
+        pageTitle: makePageTitle('New Category'),
         breadcrumbs: [
             {
                 title: 'Home',
@@ -49,6 +56,7 @@ export const routeMap: RouteMap = {
     },
     ['/recipes']: {
         title: 'Recipes',
+        pageTitle: makePageTitle('Recipes'),
         breadcrumbs: [
             {
                 title: 'Home',
@@ -58,6 +66,7 @@ export const routeMap: RouteMap = {
     },
     ['/recipes/[recipeId]']: {
         title: 'View',
+        pageTitle: makePageTitle('View Recipe'),
         breadcrumbs: [
             {
                 title: 'Home',
@@ -71,6 +80,7 @@ export const routeMap: RouteMap = {
     },
     ['/recipes/new']: {
         title: 'New',
+        pageTitle: makePageTitle('New Recipe'),
         breadcrumbs: [
             {
                 title: 'Home',
@@ -82,7 +92,11 @@ export const routeMap: RouteMap = {
             },
         ],
     },
-    default: { title: 'Home', isDefault: true },
+    default: {
+        title: 'Home',
+        pageTitle: makePageTitle('Home'),
+        isDefault: true,
+    },
 };
 
 export type NavbarRoute = { title: string; pathname: string };

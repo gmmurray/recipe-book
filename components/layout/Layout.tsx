@@ -27,6 +27,10 @@ const Layout: FC = ({ children }) => {
         }
     }, [pathname, push, session, sessionIsLoading]);
 
+    useEffect(() => {
+        document.title = currentRoute.pageTitle;
+    }, [currentRoute]);
+
     if (sessionIsLoading) {
         return <CenteredCircularProgress minHeight="calc(100vh - 64px)" />;
     }
