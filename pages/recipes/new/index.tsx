@@ -12,7 +12,7 @@ import {
     Typography,
 } from '@mui/material';
 import { Field, Form } from 'react-final-form';
-import { Fragment, useCallback } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import {
     composeValidators,
     isMaxLength,
@@ -30,6 +30,7 @@ import Link from 'next/link';
 import { LoadingButton } from '@mui/lab';
 import { Recipe } from '../../../entities/Recipe';
 import { addHttp } from '../../../util/addHttp';
+import { resolveQueryParam } from '../../../util/resolveQueryParam';
 import { useCreateRecipeMutation } from '../../../lib/queries/recipeQueries';
 import { useGetCategories } from '../../../lib/queries/categoryQueries';
 import { useRouter } from 'next/router';
@@ -41,9 +42,14 @@ const NewRecipe = () => {
     const router = useRouter();
     const { data: session } = useSession();
 
+    const routerCategoryId = resolveQueryParam(router.query, 'categoryId');
+    const [initialCategoryId, setInitialCategoryId] = useState<string | null>(
+        null,
+    );
+
     const createMutation = useCreateRecipeMutation();
     const { data: categories, isLoading: categoriesIsLoading } =
-        useGetCategories(null);
+        useGetCategories(null, null);
 
     const handleCreate = useCallback(
         async (data: Partial<Recipe>) => {
@@ -72,11 +78,30 @@ const NewRecipe = () => {
         [createMutation, enqueueSnackbar, router, session?.user],
     );
 
+    useEffect(() => {
+        if (
+            routerCategoryId &&
+            categories &&
+            categories.some(c => c._id === routerCategoryId)
+        ) {
+            setInitialCategoryId(routerCategoryId);
+        } else {
+            setInitialCategoryId(null);
+        }
+    }, [routerCategoryId, categories]);
+
     return (
         <Fragment>
             <Box display="flex" alignItems="center">
                 <Typography variant="h3">Add recipe</Typography>
-                <Link href="/recipes" passHref>
+                <Link
+                    href={`/recipes${
+                        initialCategoryId
+                            ? `?categoryId=${initialCategoryId}`
+                            : ''
+                    }`}
+                    passHref
+                >
                     <Button
                         sx={{ ml: 'auto' }}
                         variant="outlined"
@@ -88,6 +113,11 @@ const NewRecipe = () => {
             </Box>
             <Form
                 onSubmit={(data: Partial<Recipe>) => handleCreate(data)}
+                initialValues={
+                    initialCategoryId
+                        ? { categoryId: initialCategoryId }
+                        : undefined
+                }
                 render={({ handleSubmit }) => (
                     <form onSubmit={handleSubmit}>
                         <Grid
@@ -140,8 +170,8 @@ const NewRecipe = () => {
                                                 </MenuItem>
                                                 {(categories ?? []).map(c => (
                                                     <MenuItem
-                                                        key={c._id}
-                                                        value={c._id}
+                                                        key={c._id!}
+                                                        value={c._id!}
                                                     >
                                                         {c.name}
                                                     </MenuItem>

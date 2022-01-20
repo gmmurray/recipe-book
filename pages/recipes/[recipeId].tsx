@@ -1,7 +1,6 @@
 import {
     Button,
     CircularProgress,
-    Divider,
     FormControl,
     Grid,
     InputLabel,
@@ -50,7 +49,7 @@ const ViewRecipe = () => {
 
     const updateMutation = useUpdateRecipeMutation();
     const { data: categories, isLoading: categoriesIsLoading } =
-        useGetCategories(null);
+        useGetCategories(null, null);
 
     const handleUpdate = useCallback(
         async (data: Recipe) => {

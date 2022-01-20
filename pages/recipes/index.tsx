@@ -71,6 +71,8 @@ const ViewRecipes = () => {
     const { enqueueSnackbar } = useSnackbar();
     const router = useRouter();
 
+    const categoryId = resolveQueryParam(router.query, 'categoryId');
+
     const [categoryFilter, setCategoryFilter] = useState<
         RecipeFilter['categoryId']
     >(defaultRecipeFilter.categoryId);
@@ -187,7 +189,6 @@ const ViewRecipes = () => {
     );
 
     useEffect(() => {
-        const categoryId = resolveQueryParam(router.query, 'categoryId');
         if (categoryId) {
             setCategoryFilter(categoryId);
             if (categories && categories.some(c => c._id === categoryId)) {
@@ -197,7 +198,7 @@ const ViewRecipes = () => {
                 ]);
             }
         }
-    }, [router.query, router.query.categoryId, categories]);
+    }, [categories, categoryId]);
 
     const handleCategoryToggle = useCallback(
         (category: Category) => {
@@ -207,12 +208,15 @@ const ViewRecipes = () => {
                 newValue.find(c => c._id === category._id)
             ) {
                 newValue = newValue.filter(c => c._id !== category._id);
+                if (category._id === categoryId) {
+                    router.replace('/recipes');
+                }
             } else {
                 newValue = [...newValue, category];
             }
             setFilteredCategories(newValue);
         },
-        [filteredCategories],
+        [categoryId, filteredCategories, router],
     );
 
     useEffect(() => {
@@ -288,7 +292,12 @@ const ViewRecipes = () => {
         <Fragment>
             <Box display="flex" alignItems="center">
                 <Typography variant="h3">Recipes</Typography>
-                <Link href="/recipes/new" passHref>
+                <Link
+                    href={`/recipes/new${
+                        categoryId ? `?categoryId=${categoryId}` : ''
+                    }`}
+                    passHref
+                >
                     <Button
                         sx={{ ml: 'auto' }}
                         variant="outlined"
