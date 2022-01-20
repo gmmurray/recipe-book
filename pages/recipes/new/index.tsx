@@ -17,7 +17,7 @@ import {
     composeValidators,
     isMaxLength,
     isRequired,
-    isValidUrl,
+    isValidBaseUrl,
 } from '../../../util/validation';
 import {
     showErrorSnackbar,
@@ -186,7 +186,7 @@ const NewRecipe = () => {
                                     name="url"
                                     validate={composeValidators(
                                         isRequired('Url'),
-                                        isValidUrl('Url'),
+                                        isValidBaseUrl('Url'),
                                     )}
                                     render={({ input, meta }) => (
                                         <TextField

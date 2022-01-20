@@ -380,38 +380,39 @@ const ViewRecipes = () => {
                                 <Grid key={_id} item xs={12} md={4}>
                                     <Fade in={true} timeout={500}>
                                         <Card sx={{ minHeight: '100%' }}>
-                                            <CardActionArea
-                                                onClick={() =>
-                                                    handleRecipeNavigation(_id)
-                                                }
+                                            <Link
+                                                href={`/recipes/${_id}`}
+                                                passHref
                                             >
-                                                <CardContent>
-                                                    <Typography variant="h6">
-                                                        {name}
-                                                    </Typography>
-                                                    <Typography
-                                                        color="text.secondary"
-                                                        gutterBottom
-                                                    >
-                                                        {category?.name ??
-                                                            'No category'}
-                                                    </Typography>
-                                                    {rating === 0 ? (
-                                                        <Typography
-                                                            color="warning.main"
-                                                            variant="subtitle2"
-                                                        >
-                                                            No rating
+                                                <CardActionArea>
+                                                    <CardContent>
+                                                        <Typography variant="h6">
+                                                            {name}
                                                         </Typography>
-                                                    ) : (
-                                                        <Rating
-                                                            value={rating}
-                                                            size="small"
-                                                            readOnly
-                                                        />
-                                                    )}
-                                                </CardContent>
-                                            </CardActionArea>
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            gutterBottom
+                                                        >
+                                                            {category?.name ??
+                                                                'No category'}
+                                                        </Typography>
+                                                        {rating === 0 ? (
+                                                            <Typography
+                                                                color="warning.main"
+                                                                variant="subtitle2"
+                                                            >
+                                                                No rating
+                                                            </Typography>
+                                                        ) : (
+                                                            <Rating
+                                                                value={rating}
+                                                                size="small"
+                                                                readOnly
+                                                            />
+                                                        )}
+                                                    </CardContent>
+                                                </CardActionArea>
+                                            </Link>
                                             <CardActions>
                                                 <Button
                                                     size="small"

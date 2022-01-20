@@ -19,3 +19,9 @@ $success-dark: #388e3c;
         text-align: center;
     }
 }
+
+#view-recipe-accordion-details {
+    &::before {
+        background-color: unset;
+    }
+}

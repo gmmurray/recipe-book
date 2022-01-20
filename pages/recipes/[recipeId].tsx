@@ -1,4 +1,8 @@
 import {
+    Accordion,
+    AccordionActions,
+    AccordionDetails,
+    AccordionSummary,
     Button,
     CircularProgress,
     FormControl,
@@ -17,7 +21,7 @@ import {
     composeValidators,
     isMaxLength,
     isRequired,
-    isValidUrl,
+    isValidFullUrl,
 } from '../../util/validation';
 import { showErrorSnackbar, showSuccessSnackbar } from '../../config/notistack';
 import {
@@ -29,17 +33,30 @@ import {
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { Box } from '@mui/system';
 import ContentWithStatus from '../../components/shared/ContentWithStatus';
+import { ExpandMore } from '@mui/icons-material';
 import Link from 'next/link';
 import { LoadingButton } from '@mui/lab';
 import { Recipe } from '../../entities/Recipe';
+import StatefulIframe from '../../components/shared/StatefulIframe';
 import { addHttp } from '../../util/addHttp';
 import { resolveQueryParam } from '../../util/resolveQueryParam';
 import { useGetCategories } from '../../lib/queries/categoryQueries';
 import { useRouter } from 'next/router';
 import { useSnackbar } from 'notistack';
 
+type AccordionState = {
+    details: boolean;
+    iframe: boolean;
+};
+
 const ViewRecipe = () => {
     const [showRecipe, setShowRecipe] = useState(false);
+
+    const [accordionState, setAccordionState] = useState<AccordionState>({
+        details: true,
+        iframe: false,
+    });
+
     const { enqueueSnackbar } = useSnackbar();
     const router = useRouter();
     const recipeId = resolveQueryParam(router.query, 'recipeId');
@@ -93,10 +110,17 @@ const ViewRecipe = () => {
         [deleteMutation, enqueueSnackbar, router],
     );
 
+    const handleAccordionChange = useCallback((key: 'details' | 'iframe') => {
+        setAccordionState(state => ({
+            ...state,
+            [key]: !state[key],
+        }));
+    }, []);
+
     if (recipeIsLoading) return null;
     return (
         <Fragment>
-            <Box display="flex" alignItems="center">
+            <Box display="flex" alignItems="center" mb={2}>
                 <Typography variant="h3">View recipe</Typography>
                 <Link href="/recipes" passHref>
                     <Button
@@ -108,78 +132,92 @@ const ViewRecipe = () => {
                     </Button>
                 </Link>
             </Box>
-            <Paper sx={{ px: 2 }}>
-                <ContentWithStatus
-                    loading={recipeIsLoading}
-                    empty={!recipe}
-                    name="recipe"
-                    marginY={5}
-                    isSingle={true}
+            <ContentWithStatus
+                loading={recipeIsLoading}
+                empty={!recipe}
+                name="recipe"
+                marginY={0}
+                isSingle={true}
+            >
+                <Accordion
+                    expanded={accordionState.details}
+                    onChange={() => handleAccordionChange('details')}
+                    id="view-recipe-accordion-details"
+                    sx={{ my: 0 }}
                 >
-                    <Form
-                        onSubmit={(data: Recipe) => handleUpdate(data)}
-                        initialValues={{
-                            ...recipe,
-                            rating: parseInt((recipe?.rating ?? 0).toString()),
-                        }}
-                        render={({ handleSubmit, values }) => (
-                            <form onSubmit={handleSubmit}>
-                                <Grid
-                                    container
-                                    sx={{ my: 2, maxWidth: { md: '50%' } }}
-                                    columns={6}
-                                    spacing={2}
-                                >
-                                    <Grid item xs={12} md={3}>
-                                        <Field
-                                            name="name"
-                                            validate={isRequired('Name')}
-                                            render={({ input, meta }) => (
-                                                <TextField
-                                                    {...input}
-                                                    label="Name"
-                                                    variant="outlined"
-                                                    fullWidth
-                                                    error={
-                                                        meta.error &&
-                                                        meta.touched
-                                                    }
-                                                    helperText={
-                                                        meta.touched &&
-                                                        meta.error
-                                                    }
-                                                />
-                                            )}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={3}>
-                                        <Field
-                                            name="categoryId"
-                                            render={({ input }) => (
-                                                <FormControl fullWidth>
-                                                    <InputLabel>
-                                                        Category
-                                                    </InputLabel>
-                                                    <Select
+                    <AccordionSummary expandIcon={<ExpandMore />}>
+                        <Typography>Details</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Form
+                            onSubmit={(data: Recipe) => handleUpdate(data)}
+                            initialValues={{
+                                ...recipe,
+                                rating: parseInt(
+                                    (recipe?.rating ?? 0).toString(),
+                                ),
+                            }}
+                            render={({ handleSubmit, values }) => (
+                                <form onSubmit={handleSubmit}>
+                                    <Grid
+                                        container
+                                        sx={{
+                                            maxWidth: { md: '50%' },
+                                        }}
+                                        columns={6}
+                                        spacing={2}
+                                    >
+                                        <Grid item xs={12} md={3}>
+                                            <Field
+                                                name="name"
+                                                validate={isRequired('Name')}
+                                                render={({ input, meta }) => (
+                                                    <TextField
                                                         {...input}
-                                                        label="Category"
-                                                        disabled={
-                                                            categoriesIsLoading ||
-                                                            !categories ||
-                                                            categories.length ===
-                                                                0
+                                                        label="Name"
+                                                        variant="outlined"
+                                                        fullWidth
+                                                        error={
+                                                            meta.error &&
+                                                            meta.touched
                                                         }
-                                                        startAdornment={
-                                                            categoriesIsLoading ? (
-                                                                <CircularProgress />
-                                                            ) : undefined
+                                                        helperText={
+                                                            meta.touched &&
+                                                            meta.error
                                                         }
-                                                    >
-                                                        <MenuItem value="0">
-                                                            No Category
-                                                        </MenuItem>
-                                                        {(categories ?? []).map(
-                                                            c => (
+                                                    />
+                                                )}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={3}>
+                                            <Field
+                                                name="categoryId"
+                                                render={({ input }) => (
+                                                    <FormControl fullWidth>
+                                                        <InputLabel>
+                                                            Category
+                                                        </InputLabel>
+                                                        <Select
+                                                            {...input}
+                                                            label="Category"
+                                                            disabled={
+                                                                categoriesIsLoading ||
+                                                                !categories ||
+                                                                categories.length ===
+                                                                    0
+                                                            }
+                                                            startAdornment={
+                                                                categoriesIsLoading ? (
+                                                                    <CircularProgress />
+                                                                ) : undefined
+                                                            }
+                                                        >
+                                                            <MenuItem value="0">
+                                                                No Category
+                                                            </MenuItem>
+                                                            {(
+                                                                categories ?? []
+                                                            ).map(c => (
                                                                 <MenuItem
                                                                     key={c._id!}
                                                                     value={
@@ -188,139 +226,149 @@ const ViewRecipe = () => {
                                                                 >
                                                                     {c.name}
                                                                 </MenuItem>
-                                                            ),
-                                                        )}
-                                                    </Select>
-                                                </FormControl>
-                                            )}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={6}>
-                                        <Field
-                                            name="url"
-                                            validate={composeValidators(
-                                                isRequired('Url'),
-                                                isValidUrl('Url'),
-                                            )}
-                                            render={({ input, meta }) => (
-                                                <TextField
-                                                    {...input}
-                                                    label="Url"
-                                                    variant="outlined"
-                                                    fullWidth
-                                                    error={
-                                                        meta.error &&
-                                                        meta.touched
-                                                    }
-                                                    helperText={
-                                                        meta.touched &&
-                                                        meta.error
-                                                    }
-                                                />
-                                            )}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={6}>
-                                        <Field
-                                            name="notes"
-                                            validate={isMaxLength('Notes', 450)}
-                                            render={({ input, meta }) => (
-                                                <TextField
-                                                    {...input}
-                                                    label="Notes"
-                                                    variant="outlined"
-                                                    fullWidth
-                                                    multiline
-                                                    error={
-                                                        meta.error &&
-                                                        meta.touched
-                                                    }
-                                                    helperText={
-                                                        meta.touched &&
-                                                        meta.error
-                                                    }
-                                                />
-                                            )}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Field
-                                            type="radio"
-                                            name="rating"
-                                            key={`${values.rating}-rating`}
-                                            render={({ input }) => (
-                                                <Fragment>
-                                                    <Typography component="legend">
-                                                        Rating
-                                                    </Typography>
-                                                    <Rating
+                                                            ))}
+                                                        </Select>
+                                                    </FormControl>
+                                                )}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <Field
+                                                name="url"
+                                                validate={composeValidators(
+                                                    isRequired('Url'),
+                                                    isValidFullUrl('Url'),
+                                                )}
+                                                render={({ input, meta }) => (
+                                                    <TextField
                                                         {...input}
-                                                        defaultValue={
-                                                            values.rating
+                                                        label="Url"
+                                                        variant="outlined"
+                                                        fullWidth
+                                                        error={
+                                                            meta.error &&
+                                                            meta.touched
                                                         }
-                                                        key={`${values.rating}-rating`}
+                                                        helperText={
+                                                            meta.touched &&
+                                                            meta.error
+                                                        }
                                                     />
-                                                </Fragment>
-                                            )}
-                                        />
+                                                )}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <Field
+                                                name="notes"
+                                                validate={isMaxLength(
+                                                    'Notes',
+                                                    450,
+                                                )}
+                                                render={({ input, meta }) => (
+                                                    <TextField
+                                                        {...input}
+                                                        label="Notes"
+                                                        variant="outlined"
+                                                        fullWidth
+                                                        multiline
+                                                        error={
+                                                            meta.error &&
+                                                            meta.touched
+                                                        }
+                                                        helperText={
+                                                            meta.touched &&
+                                                            meta.error
+                                                        }
+                                                    />
+                                                )}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Field
+                                                type="radio"
+                                                name="rating"
+                                                key={`${values.rating}-rating`}
+                                                render={({ input }) => (
+                                                    <Fragment>
+                                                        <Typography component="legend">
+                                                            Rating
+                                                        </Typography>
+                                                        <Rating
+                                                            {...input}
+                                                            defaultValue={
+                                                                values.rating
+                                                            }
+                                                            key={`${values.rating}-rating`}
+                                                        />
+                                                    </Fragment>
+                                                )}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <LoadingButton
+                                                variant="contained"
+                                                color="primary"
+                                                type="submit"
+                                                loading={
+                                                    updateMutation.isLoading
+                                                }
+                                            >
+                                                Save
+                                            </LoadingButton>
+                                            <Button
+                                                variant="outlined"
+                                                color="error"
+                                                onClick={() =>
+                                                    handleDelete(recipeId)
+                                                }
+                                                sx={{ ml: 2 }}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </Grid>
                                     </Grid>
-                                    <Grid item xs={12} sx={{ mb: 2 }}>
-                                        <LoadingButton
-                                            variant="contained"
-                                            color="primary"
-                                            type="submit"
-                                            loading={updateMutation.isLoading}
-                                        >
-                                            Save
-                                        </LoadingButton>
-                                        <Button
-                                            variant="outlined"
-                                            color="error"
-                                            onClick={() =>
-                                                handleDelete(recipeId)
-                                            }
-                                            sx={{ ml: 2 }}
-                                        >
-                                            Delete
-                                        </Button>
-                                    </Grid>
-                                </Grid>
-                            </form>
+                                </form>
+                            )}
+                        />
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion
+                    id="view-recipe-accordion-iframe"
+                    expanded={accordionState.iframe}
+                    onChange={() => handleAccordionChange('iframe')}
+                >
+                    <AccordionSummary expandIcon={<ExpandMore />}>
+                        <Typography>Recipe</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Button
+                            href={recipe?.url ?? ''}
+                            variant="outlined"
+                            color="primary"
+                            sx={{ mb: 2 }}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                        >
+                            Go to recipe
+                        </Button>
+                        {accordionState.iframe && (
+                            <Box>
+                                <StatefulIframe
+                                    url={recipe?.url}
+                                    loadWarningText={`*Some websites cannot be shown here due to security settings on their end. If you see a gray box above, use the "Go to recipe" button above to visit the website directly.`}
+                                    missingUrlErrorText="A url was not provided"
+                                    iframeStyles={{
+                                        width: '100%',
+                                        height: '100vh',
+                                        borderRadius: '4px 4px',
+                                        border: 'none',
+                                    }}
+                                />
+                            </Box>
                         )}
-                    />
-                </ContentWithStatus>
-            </Paper>
-            <Box display="flex">
-                <Button
-                    variant="outlined"
-                    onClick={() => setShowRecipe(state => !state)}
-                >
-                    {showRecipe ? 'Hide recipe' : 'Show recipe'}
-                </Button>
-                <Button
-                    href={recipe?.url ?? ''}
-                    variant="outlined"
-                    color="primary"
-                    sx={{ ml: 2 }}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                >
-                    Go to recipe
-                </Button>
-            </Box>
-            {showRecipe && (
-                <Box sx={{ minWidth: '100%', my: 2 }}>
-                    <iframe
-                        src={recipe?.url}
-                        style={{
-                            width: '100%',
-                            height: '100vh',
-                            borderRadius: '4px',
-                            border: 'none',
-                        }}
-                    />
-                </Box>
-            )}
+                    </AccordionDetails>
+                </Accordion>
+            </ContentWithStatus>
         </Fragment>
     );
 };
