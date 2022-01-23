@@ -75,8 +75,13 @@ const handleGetRequest: RequestMethodHandler = async (req, res, db, client) =>
                             }
                             $match['$and']!.push({ ...categoryIdFilter });
                         } else if (key === 'rating') {
+                            const rating = parseInt(
+                                request.query[key] as string,
+                            );
+                            const ratingMatch =
+                                rating === 0 ? rating : { $gte: rating };
                             $match['$and']!.push({
-                                [key]: parseInt(request.query[key] as string),
+                                [key]: ratingMatch,
                             });
                         } else {
                             $match['$and']!.push({ [key]: request.query[key] });

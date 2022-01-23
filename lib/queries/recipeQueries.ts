@@ -1,4 +1,5 @@
 import {
+    HomepageRecipeResult,
     Recipe,
     RecipeFilter,
     RecipeSort,
@@ -22,6 +23,7 @@ export const recipeQueryKeys = {
         [recipeQueryKeys.all, 'view', { _id }] as const,
     search: (filter: RecipeFilter | null, sort: RecipeSort | null) =>
         [recipeQueryKeys.all, 'search', { filter, sort }] as const,
+    homepage: () => [recipeQueryKeys.all, 'homepage'] as const,
 };
 
 const apiEndpoint = 'api/recipes';
@@ -49,6 +51,51 @@ export const useGetRecipesQuery = (
         recipeQueryKeys.search(filter, sort),
         () => getRecipes(filter, sort),
         { retry: false },
+    );
+
+const getHomepageRecipes = async (): Promise<HomepageRecipeResult> => {
+    const recipes = ((await axiosGetRequest(createEndpoint(apiEndpoint))) ??
+        []) as Recipe[];
+
+    const lookup = new Map(recipes.map(r => [r._id, r]));
+
+    const recentlyAdded = recipes
+        .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
+        .map(r => r._id);
+
+    const highestRated = recipes
+        .sort((a, b) => (a.rating > b.rating ? -1 : 1))
+        .map(r => r._id);
+
+    const websiteCounts: Record<string, number> = {};
+    try {
+        recipes.forEach(r => {
+            const hostname = new URL(r.url).hostname;
+            websiteCounts[hostname] = (websiteCounts[hostname] ?? 0) + 1;
+        });
+    } catch (e) {
+        console.log('recipe skipped due to invalid url');
+    }
+
+    const recommendedWebsites = Object.keys(websiteCounts)
+        .map(key => ({ url: key, count: websiteCounts[key] }))
+        .sort((a, b) => (a.count > b.count ? -1 : 1))
+        .map(item => item.url);
+
+    return {
+        lookup,
+        recommendedWebsites: recommendedWebsites.slice(0, 5),
+        recentlyAdded: recentlyAdded.slice(0, 5),
+        highestRated: highestRated.slice(0, 5),
+    };
+};
+export const useGetHomepageRecipes = () =>
+    useQuery<HomepageRecipeResult>(
+        recipeQueryKeys.homepage(),
+        () => getHomepageRecipes(),
+        {
+            retry: false,
+        },
     );
 
 const createRecipe = async (data: Partial<Recipe>) => {

@@ -39,4 +39,11 @@ export const defaultRecipeSort: RecipeSort = {
     sortDir: 'asc',
 };
 
+export interface HomepageRecipeResult {
+    lookup: Map<string, Recipe>;
+    recommendedWebsites: string[];
+    recentlyAdded: string[];
+    highestRated: string[];
+}
+
 export const recipesCollection = 'recipes';
